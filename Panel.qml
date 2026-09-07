@@ -86,9 +86,7 @@ Panel {
   function heroMeta() {
     if (!record) return ""
     if (String(record.usageStatusText || "") !== "") return record.usageStatusText
-    var tier = String(record.tierLabel || "")
-    if (tier === "") return "Pay per token"
-    return tier.charAt(0).toUpperCase() + tier.slice(1)
+    return "Usage across all keys"
   }
 
   // UTC calendar date, recomputed from nowMs so a panel left open across
@@ -393,10 +391,18 @@ Panel {
               foreground: root.foreground
               fontFamily: root.fontFamily
               trailingControl: Component {
-                Column {
+                Controls.AbstractButton {
+                  id: balanceLink
                   visible: header.amountText !== ""
-                  spacing: Style.space(2)
-                  width: Math.max(heroAmount.implicitWidth, heroRemaining.implicitWidth)
+                  implicitWidth: Math.max(heroAmount.implicitWidth, heroRemaining.implicitWidth)
+                  implicitHeight: balanceLabels.implicitHeight
+                  hoverEnabled: true
+                  Accessible.name: "Open OpenRouter account credits, " + header.amountText + " remaining"
+                  onClicked: root.openLink("https://openrouter.ai/credits")
+                  HoverHandler { cursorShape: Qt.PointingHandCursor }
+                  contentItem: Column {
+                    id: balanceLabels
+                    spacing: Style.space(2)
 
                   Text {
                     textFormat: Text.PlainText
@@ -407,6 +413,7 @@ Panel {
                     font.family: header.family
                     font.pixelSize: Style.font.title
                     font.bold: true
+                    font.underline: balanceLink.hovered || balanceLink.activeFocus
                     horizontalAlignment: Text.AlignRight
                   }
 
@@ -422,6 +429,7 @@ Panel {
                     font.letterSpacing: 1.2
                     horizontalAlignment: Text.AlignRight
                   }
+                }
                 }
               }
 

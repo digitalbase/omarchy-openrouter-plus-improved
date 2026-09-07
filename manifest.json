@@ -13,7 +13,7 @@
   },
   "barWidget": {
     "displayName": "OpenRouter Usage Plus",
-    "description": "Bar icon with account balance in the panel. Daily, Keys, Models, and Apps spend tabs share a period selector for 24 hours or 3, 7, 30, or 90 days.",
+    "description": "Bar icon with account balance in the panel. Daily, Keys, Models, and Apps spend tabs share a period selector for 4, 8, or 24 hours or 3, 7, 30, or 90 days.",
     "category": "AI",
     "aliases": ["openrouter", "openrouter-usage", "openrouter-usage-plus"],
     "allowMultiple": false,

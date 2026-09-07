@@ -141,10 +141,12 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(len(activity['recentDays']), 7)
 
     def test_short_period_windows(self):
-        window = c.period_time_range('24h')
-        start = dt.datetime.fromisoformat(window['start'])
-        end = dt.datetime.fromisoformat(window['end'])
-        self.assertEqual(end - start, dt.timedelta(hours=24))
+        for period, hours in [('4h', 4), ('8h', 8), ('24h', 24)]:
+            with self.subTest(period=period):
+                window = c.period_time_range(period)
+                start = dt.datetime.fromisoformat(window['start'])
+                end = dt.datetime.fromisoformat(window['end'])
+                self.assertEqual(end - start, dt.timedelta(hours=hours))
         window = c.period_time_range('3d')
         days = c.daily_usage({'data': []}, window)
         self.assertEqual(len(days), 3)
@@ -156,16 +158,19 @@ class CollectorTests(unittest.TestCase):
             windows.append(body['time_range'])
             if body.get('granularity'):
                 self.assertEqual(body['granularity'], 'hour')
-                self.assertEqual(body['limit'], 25)
+                self.assertEqual(body['limit'], hours + 1)
                 return {'data': [
                     {'created_at__hour': body['time_range']['start'], 'total_usage': 1},
                     {'date__hour': body['time_range']['end'], 'total_usage': 2}
                 ]}
             return {'data': []}
-        with patch.object(c, 'api_request', side_effect=request):
-            activity = c.probe_activity('management', '24h')
-        self.assertEqual(activity['spend'], 3)
-        self.assertTrue(all(window == windows[0] for window in windows))
+        for period, hours in [('4h', 4), ('8h', 8), ('24h', 24)]:
+            with self.subTest(period=period):
+                windows.clear()
+                with patch.object(c, 'api_request', side_effect=request):
+                    activity = c.probe_activity('management', period)
+                self.assertEqual(activity['spend'], 3)
+                self.assertTrue(all(window == windows[0] for window in windows))
 
     def test_balance_uses_management_key_without_key_endpoint(self):
         with patch.object(c, 'api_request', return_value={'total_credits': 100, 'total_usage': 40}) as request, patch.object(c, 'read_config', return_value={}):

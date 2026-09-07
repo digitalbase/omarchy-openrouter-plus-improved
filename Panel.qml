@@ -180,8 +180,8 @@ Panel {
 
   function activityHint() {
     if (!activity) return ""
-    return String(activity.helpText || (activity.period === "24h"
-      ? "All keys combined · last 24 hours, grouped by UTC date."
+    return String(activity.helpText || (["4h", "8h", "24h"].indexOf(activity.period) >= 0
+      ? "All keys combined · last " + activity.period.slice(0, -1) + " hours, grouped by UTC date."
       : "All keys combined · UTC calendar days · today is partial."))
   }
 
@@ -573,7 +573,7 @@ Panel {
                 palette.text: root.foreground
                 highlighted: periodSelect.highlightedIndex === index
               }
-              model: ["Last 24 hours", "Last 3 days", "Last 7 days", "Last 30 days", "Last 90 days"]
+              model: ["Last 4 hours", "Last 8 hours", "Last 24 hours", "Last 3 days", "Last 7 days", "Last 30 days", "Last 90 days"]
               currentIndex: usage.detailsPeriods.indexOf(usage.detailsPeriod)
               onActivated: function(index) { usage.setPeriod(usage.detailsPeriods[index]) }
               font.family: root.fontFamily

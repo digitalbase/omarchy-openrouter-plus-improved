@@ -30,7 +30,7 @@ The panel lists spend per UTC calendar day with all keys combined. Hover over a 
 
 The panel has four tabs: Daily, Keys, Models, and Apps. Daily shows the spend-by-day chart. Every tab shows spend, requests, tokens, and cache hit rate directly below the period filter. The other tabs list spend per key, model, or app, highest spend first. Hover over an entry for its full name and token count. Only entries with recorded activity appear.
 
-All tabs share one dropdown for the last 24 hours or the last 3, 7, 30, or 90 UTC calendar days, including today. The 24-hour option is a rolling window grouped by UTC date, so it may show two partial days. The default is seven days. Changing the period updates every tab. Missing days in a successful query show zero.
+All tabs share one dropdown for the last 4, 8, or 24 hours or the last 3, 7, 30, or 90 UTC calendar days, including today. The hourly options are rolling windows grouped by UTC date, so they may show two partial days. The default is seven days. Changing the period updates every tab. Missing days in a successful query show zero.
 
 Breakdowns include up to 1,000 entries. If OpenRouter truncates a response or a query fails, the affected tab shows an error instead of an incomplete list. Unattributed usage appears as Unknown.
 

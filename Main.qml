@@ -38,7 +38,7 @@ Item {
   property int refreshIntervalSec: Math.max(60, Number(setting("refreshIntervalSec", 300)))
   property string pendingKind: ""
   property string detailsPeriod: "7d"
-  readonly property var detailsPeriods: ["24h", "3d", "7d", "1mo", "3mo"]
+  readonly property var detailsPeriods: ["4h", "8h", "24h", "3d", "7d", "1mo", "3mo"]
 
   Process {
     id: collectProcess

@@ -19,12 +19,10 @@
     "allowMultiple": false,
     "defaultSection": "right",
     "defaults": {
-      "refreshIntervalSec": 300,
-      "detailsExpanded": false
+      "refreshIntervalSec": 300
     },
     "schema": [
-      { "key": "refreshIntervalSec", "type": "integer", "label": "Refresh interval (seconds)", "min": 60, "max": 3600, "step": 60, "defaultValue": 300 },
-      { "key": "detailsExpanded", "type": "boolean", "label": "Keep Details expanded", "defaultValue": false }
+      { "key": "refreshIntervalSec", "type": "integer", "label": "Refresh interval (seconds)", "min": 60, "max": 3600, "step": 60, "defaultValue": 300 }
     ]
   }
 }

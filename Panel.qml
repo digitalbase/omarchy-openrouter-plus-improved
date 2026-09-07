@@ -34,7 +34,6 @@ Panel {
   readonly property string breakdownError: periodReady && activity.breakdownErrors
     ? String(activity.breakdownErrors[activeTab] || "") : ""
 
-  readonly property bool detailsExpanded: root.setting("detailsExpanded", false) === true
 
   // A budget gauge only exists when the collector was told the top-up size
   // (fundedAmount in ~/.config/omarchy/agents/openrouter.json); without it
@@ -205,20 +204,6 @@ Panel {
     return (rate * 100).toFixed(1) + "%"
   }
 
-  function persistSettings(values) {
-    var entry = { id: root.moduleName }
-    for (var existing in root.settings)
-      if (existing !== "id") entry[existing] = root.settings[existing]
-    for (var key in values) entry[key] = values[key]
-    root.settings = entry
-    if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function")
-      root.bar.shell.updateEntryInline(root.moduleName, entry)
-  }
-
-  function toggleDetails() {
-    persistSettings({ detailsExpanded: !root.detailsExpanded })
-  }
-
   // ------------------------------------------------------------------ shell
 
   // Invisible until the collector has produced something worth reading, so
@@ -353,9 +338,7 @@ Panel {
     open: root.opened
     focusTarget: keyCatcher
     contentWidth: panel.fittedContentWidth(Style.space(380))
-    // Collapsed must be taller than the original 560 dashboard so the
-    // Details header stays on screen instead of sitting under the fold.
-    contentHeight: panel.fittedContentHeight(column.implicitHeight, Style.space(root.detailsExpanded ? 900 : 640))
+    contentHeight: panel.fittedContentHeight(column.implicitHeight, Style.space(900))
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -371,7 +354,6 @@ Panel {
       onTabRequested: function(direction) { root.switchPanel(direction) }
       onTextKey: function(t) {
         if (t === "r" || t === "R") root.refreshNow()
-        if (t === "d" || t === "D") root.toggleDetails()
       }
 
       Flickable {
@@ -549,8 +531,38 @@ Panel {
             }
             Controls.ComboBox {
               id: periodSelect
-              width: Style.space(128)
+              width: Style.space(144)
               height: Style.space(32)
+              leftPadding: Style.space(12)
+              rightPadding: Style.space(28)
+              contentItem: Text {
+                text: periodSelect.displayText
+                textFormat: Text.PlainText
+                color: root.foreground
+                font: periodSelect.font
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+              }
+              indicator: Text {
+                text: "▾"
+                color: root.foreground
+                font: periodSelect.font
+                anchors.right: parent.right
+                anchors.rightMargin: Style.space(10)
+                anchors.verticalCenter: parent.verticalCenter
+              }
+              delegate: Controls.ItemDelegate {
+                required property string modelData
+                required property int index
+                width: periodSelect.width
+                height: Style.space(32)
+                leftPadding: Style.space(12)
+                rightPadding: Style.space(12)
+                text: modelData
+                font: periodSelect.font
+                palette.text: root.foreground
+                highlighted: periodSelect.highlightedIndex === index
+              }
               model: ["Last 7 days", "Last 30 days", "Last 90 days"]
               currentIndex: usage.detailsPeriods.indexOf(usage.detailsPeriod)
               onActivated: function(index) { usage.setPeriod(usage.detailsPeriods[index]) }
@@ -563,6 +575,53 @@ Panel {
               palette.window: root.surface
               palette.highlight: root.track
               palette.highlightedText: root.foreground
+            }
+          }
+
+          Column {
+            id: detailsSection
+            visible: root.periodReady
+            width: parent.width
+            spacing: Style.space(10)
+
+            Grid {
+              id: detailsGrid
+              width: parent.width
+              columns: 2
+              columnSpacing: Style.space(8)
+              rowSpacing: Style.space(8)
+
+              StatCard {
+                width: (detailsGrid.width - detailsGrid.columnSpacing) / 2
+                label: "Spend"
+                value: root.activity ? root.formatCost(root.activity.spend) : "—"
+              }
+              StatCard {
+                width: (detailsGrid.width - detailsGrid.columnSpacing) / 2
+                label: "Requests"
+                value: root.activity ? root.formatRequests(root.activity.requests) : "—"
+              }
+              StatCard {
+                width: (detailsGrid.width - detailsGrid.columnSpacing) / 2
+                label: "Tokens"
+                value: root.activity ? root.formatActivityTokens(root.activity.tokens) : "—"
+              }
+              StatCard {
+                width: (detailsGrid.width - detailsGrid.columnSpacing) / 2
+                label: "Cache hit"
+                value: root.activity ? root.formatCacheHit(root.activity.cacheHitRate) : "—"
+              }
+            }
+
+            Text {
+              textFormat: Text.PlainText
+              visible: text !== ""
+              width: parent.width
+              text: root.activityHint()
+              color: root.dim
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.WordWrap
             }
           }
 
@@ -639,114 +698,6 @@ Panel {
                 ratio: Number(modelData.cost || 0) / spendSection.peak
                 today: String(modelData.date || "") === root.todayDate()
               }
-            }
-          }
-
-          // ---------- Details (cards, top models, apps, keys) ----------
-          PanelSeparator {
-            visible: detailsSection.visible
-            foreground: root.foreground
-          }
-
-          Column {
-            id: detailsSection
-            visible: root.activeTab === "daily" && root.periodReady
-            width: parent.width
-            spacing: Style.space(10)
-
-            Item {
-              width: parent.width
-              implicitHeight: Math.max(detailsHdr.implicitHeight, detailsToggle.height)
-
-              PanelSectionHeader {
-                id: detailsHdr
-                anchors.left: parent.left
-                anchors.right: detailsToggle.left
-                anchors.rightMargin: Style.space(8)
-                anchors.verticalCenter: parent.verticalCenter
-                text: "DETAILS"
-                foreground: root.foreground
-                fontFamily: root.fontFamily
-              }
-
-              Rectangle {
-                id: detailsToggle
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: Style.space(88)
-                height: Style.space(28)
-                radius: Math.max(3, Style.cornerRadius - 3)
-                color: root.alpha(root.foreground, detailsToggleMa.containsMouse ? 0.12 : 0.06)
-                border.width: 1
-                border.color: root.alpha(root.foreground, detailsToggleMa.containsMouse ? 0.5 : 0.35)
-
-                Text {
-                  textFormat: Text.PlainText
-                  anchors.centerIn: parent
-                  text: root.detailsExpanded ? "COLLAPSE" : "EXPAND"
-                  color: root.foreground
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.caption
-                  font.bold: true
-                  font.letterSpacing: 1
-                }
-
-                MouseArea {
-                  id: detailsToggleMa
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.toggleDetails()
-                }
-              }
-            }
-
-            Column {
-              visible: root.detailsExpanded
-              width: parent.width
-              spacing: Style.space(10)
-
-              Grid {
-                id: detailsGrid
-                width: parent.width
-                columns: 2
-                columnSpacing: Style.space(8)
-                rowSpacing: Style.space(8)
-
-                StatCard {
-                  width: (detailsGrid.width - detailsGrid.columnSpacing) / 2
-                  label: "Spend"
-                  value: root.activity ? root.formatCost(root.activity.spend) : "—"
-                }
-                StatCard {
-                  width: (detailsGrid.width - detailsGrid.columnSpacing) / 2
-                  label: "Requests"
-                  value: root.activity ? root.formatRequests(root.activity.requests) : "—"
-                }
-                StatCard {
-                  width: (detailsGrid.width - detailsGrid.columnSpacing) / 2
-                  label: "Tokens"
-                  value: root.activity ? root.formatActivityTokens(root.activity.tokens) : "—"
-                }
-                StatCard {
-                  width: (detailsGrid.width - detailsGrid.columnSpacing) / 2
-                  label: "Cache hit"
-                  value: root.activity ? root.formatCacheHit(root.activity.cacheHitRate) : "—"
-                }
-              }
-
-              Text {
-                textFormat: Text.PlainText
-                visible: text !== ""
-                width: parent.width
-                text: root.activityHint()
-                color: root.dim
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                wrapMode: Text.WordWrap
-              }
-
-
             }
           }
 

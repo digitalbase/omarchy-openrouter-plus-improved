@@ -28,7 +28,7 @@ Alternatively, set `OPENROUTER_MANAGEMENT_KEY` in the shell's environment. This 
 
 The panel lists spend per UTC calendar day with all keys combined. Hover over a day for token and request counts. Today is partial and reflects the data currently available from OpenRouter.
 
-The panel has four tabs: Daily, Keys, Models, and Apps. Daily shows the spend-by-day chart and expandable summary cards. The other tabs list spend per key, model, or app, highest spend first. Hover over an entry for its full name and token count. Only entries with recorded activity appear.
+The panel has four tabs: Daily, Keys, Models, and Apps. Daily shows the spend-by-day chart. Every tab shows spend, requests, tokens, and cache hit rate directly below the period filter. The other tabs list spend per key, model, or app, highest spend first. Hover over an entry for its full name and token count. Only entries with recorded activity appear.
 
 All tabs share one dropdown for the last 7, 30, or 90 days, including today. The default is seven days. Changing the period updates every tab. Missing days in a successful query show zero.
 
@@ -40,12 +40,11 @@ Account credit balance comes from `/credits` with the same management key. A bal
 
 ## Settings
 
-Right-click the bar icon to force a refresh. Press `d` in the panel to toggle Details.
+Right-click the bar icon to force a refresh.
 
 | Setting | Default | Meaning |
 |---|---|---|
 | `refreshIntervalSec` | 300 | Automatic refresh interval |
-| `detailsExpanded` | false | Remember whether Details is expanded |
 
 Successful usage is cached for five minutes. Forced refresh bypasses the cache.
 

@@ -28,7 +28,7 @@ Alternatively, set `OPENROUTER_MANAGEMENT_KEY` in the shell's environment. This 
 
 The panel lists spend per UTC calendar day with all keys combined. Hover over a day for token and request counts. Today is partial and reflects the data currently available from OpenRouter.
 
-Expand Details and use its period selector to choose 7 days, 1 month, or 3 months. Both the daily list and Details totals use that window, including today. Missing days in a successful query show zero. Details also includes cache hit rate and the top models, apps, and keys when available.
+Expand Details and use its period selector to choose 7 days, 1 month, or 3 months. The overview always shows the latest seven days, including today. The selected window applies to Details totals. Missing days in a successful query show zero. Details also includes cache hit rate and the top models, apps, and keys when available.
 
 The collector uses the [Analytics API](https://openrouter.ai/docs/api/api-reference/beta-analytics/query-analytics) with `granularity: day` and no key filter or key dimension. There is no per-key limit on coverage and no local usage fallback. Both documented date fields, `date__day` and `created_at__day`, are supported. Incomplete responses are rejected instead of displayed as full totals.
 

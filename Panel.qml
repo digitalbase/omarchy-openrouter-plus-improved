@@ -23,7 +23,7 @@ Panel {
 
   readonly property var record: usage.record
   readonly property var balance: record ? (record.balance || null) : null
-  readonly property var days: record ? (record.recentDays || []) : []
+  readonly property var days: record ? (record.recentDays || []).slice(-7) : []
   readonly property var models: modelRows(record)
   readonly property var activity: record ? (record.activity || null) : null
   readonly property var topModels: activityModelRows()
@@ -581,7 +581,7 @@ Panel {
 
             PanelSectionHeader {
               width: parent.width
-              text: "SPEND BY DAY · ALL KEYS · UTC"
+              text: "LAST 7 DAYS · ALL KEYS · UTC"
               foreground: root.foreground
               fontFamily: root.fontFamily
             }

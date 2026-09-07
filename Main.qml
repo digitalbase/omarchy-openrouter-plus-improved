@@ -37,7 +37,7 @@ Item {
 
   property int refreshIntervalSec: Math.max(60, Number(setting("refreshIntervalSec", 300)))
   property string pendingKind: ""
-  property string detailsPeriod: "1mo"
+  property string detailsPeriod: "7d"
   readonly property var detailsPeriods: ["7d", "1mo", "3mo"]
 
   Process {
@@ -149,7 +149,7 @@ Item {
     if (typeof value === "boolean") return value
     if (Array.isArray(value)) {
       var list = []
-      for (var i = 0; i < value.length && i < 128; i++) list.push(root.normalizeValue(value[i], depth + 1))
+      for (var i = 0; i < value.length && i < 1000; i++) list.push(root.normalizeValue(value[i], depth + 1))
       return list
     }
     if (typeof value === "object") {

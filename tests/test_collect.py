@@ -111,6 +111,35 @@ class CollectorTests(unittest.TestCase):
         request = opened.call_args.args[0]
         self.assertEqual(request.get_header('Authorization'), 'Bearer management')
 
+    def test_breakdowns_include_all_rows_sorted_by_spend(self):
+        def request(path, key, method='GET', body=None):
+            if body.get('granularity') == 'day' or not body.get('dimensions'):
+                return {'data': []}
+            self.assertIn('total_usage', body['metrics'])
+            self.assertEqual(body['order_by']['field'], 'total_usage')
+            self.assertEqual(body['limit'], 1000)
+            field = body['dimensions'][0]
+            return {'data': [{field: f'Entry {i}', 'total_usage': i, 'tokens_total': 1000-i} for i in range(40)]}
+        with patch.object(c, 'api_request', side_effect=request):
+            activity = c.probe_activity('management', '7d')
+        for field in ('topKeys', 'topModels', 'topApps'):
+            self.assertEqual(len(activity[field]), 40)
+            self.assertEqual(activity[field][0]['cost'], 39)
+            self.assertEqual(sum(row['cost'] for row in activity[field]), 780)
+        self.assertEqual(c.ranked_spend([{'app': None, 'total_usage': 2}], 'app', 1000)[0]['name'], 'Unknown')
+
+    def test_truncated_breakdown_is_an_error_not_an_empty_success(self):
+        def request(path, key, method='GET', body=None):
+            if body.get('dimensions') == ['api_key_id']:
+                return {'data': [], 'metadata': {'truncated': True}}
+            return {'data': []}
+        with patch.object(c, 'api_request', side_effect=request):
+            activity = c.probe_activity('management', '7d')
+        self.assertIn('keys', activity['breakdownErrors'])
+        self.assertEqual(activity['topKeys'], [])
+        self.assertNotIn('models', activity['breakdownErrors'])
+        self.assertEqual(len(activity['recentDays']), 7)
+
     def test_balance_uses_management_key_without_key_endpoint(self):
         with patch.object(c, 'api_request', return_value={'total_credits': 100, 'total_usage': 40}) as request, patch.object(c, 'read_config', return_value={}):
             result = c.probe_account('management')

@@ -28,7 +28,11 @@ Alternatively, set `OPENROUTER_MANAGEMENT_KEY` in the shell's environment. This 
 
 The panel lists spend per UTC calendar day with all keys combined. Hover over a day for token and request counts. Today is partial and reflects the data currently available from OpenRouter.
 
-Expand Details and use its period selector to choose 7 days, 1 month, or 3 months. The overview always shows the latest seven days, including today. The selected window applies to Details totals. Missing days in a successful query show zero. Details also includes cache hit rate and the top models, apps, and keys when available.
+The panel has four tabs: Daily, Keys, Models, and Apps. Daily shows the spend-by-day chart and expandable summary cards. The other tabs list spend per key, model, or app, highest spend first. Hover over an entry for its full name and token count. Only entries with recorded activity appear.
+
+All tabs share one dropdown for the last 7, 30, or 90 days, including today. The default is seven days. Changing the period updates every tab. Missing days in a successful query show zero.
+
+Breakdowns include up to 1,000 entries. If OpenRouter truncates a response or a query fails, the affected tab shows an error instead of an incomplete list. Unattributed usage appears as Unknown.
 
 The collector uses the [Analytics API](https://openrouter.ai/docs/api/api-reference/beta-analytics/query-analytics) with `granularity: day` and no key filter or key dimension. There is no per-key limit on coverage and no local usage fallback. Both documented date fields, `date__day` and `created_at__day`, are supported. Incomplete responses are rejected instead of displayed as full totals.
 

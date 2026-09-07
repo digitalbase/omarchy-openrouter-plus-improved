@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls as Controls
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
@@ -23,12 +24,15 @@ Panel {
 
   readonly property var record: usage.record
   readonly property var balance: record ? (record.balance || null) : null
-  readonly property var days: record ? (record.recentDays || []).slice(-7) : []
-  readonly property var models: modelRows(record)
+  readonly property var days: record ? (record.recentDays || []) : []
   readonly property var activity: record ? (record.activity || null) : null
-  readonly property var topModels: activityModelRows()
-  readonly property var topApps: activity && Array.isArray(activity.topApps) ? activity.topApps.slice(0, 3) : []
-  readonly property var topKeys: activity && Array.isArray(activity.topKeys) ? activity.topKeys.slice(0, 3) : []
+  property string activeTab: "daily"
+  readonly property bool periodReady: !!activity && activity.period === usage.detailsPeriod
+  readonly property var breakdownRows: !periodReady ? [] :
+    (activeTab === "keys" ? activity.topKeys || [] :
+     activeTab === "models" ? activity.topModels || [] : activity.topApps || [])
+  readonly property string breakdownError: periodReady && activity.breakdownErrors
+    ? String(activity.breakdownErrors[activeTab] || "") : ""
 
   readonly property bool detailsExpanded: root.setting("detailsExpanded", false) === true
 
@@ -146,20 +150,6 @@ Panel {
     }
     rows.sort(function(a, b) { return b.cost - a.cost })
     return rows.slice(0, 4)
-  }
-
-  function activityModelRows() {
-    var list = activity && activity.topModels ? activity.topModels : []
-    var rows = []
-    for (var i = 0; i < list.length; i++) {
-      var row = list[i] || {}
-      rows.push({
-        name: usage.friendlyModelName(row.name || ""),
-        tokens: Number(row.tokens || 0),
-        cost: Number(row.cost || 0)
-      })
-    }
-    return rows
   }
 
   function modelTooltip(row) {
@@ -506,48 +496,113 @@ Panel {
             }
           }
 
-          // ---------- Account links ----------
-          PanelSeparator {
-            visible: linksSection.visible
-            foreground: root.foreground
+          PanelSeparator { foreground: root.foreground }
+
+          Row {
+            id: tabRow
+            width: parent.width
+            spacing: Style.space(4)
+            Repeater {
+              model: ["Daily", "Keys", "Models", "Apps"]
+              Controls.Button {
+                required property string modelData
+                width: (tabRow.width - tabRow.spacing * 3) / 4
+                height: Style.space(34)
+                text: modelData
+                checkable: true
+                checked: root.activeTab === modelData.toLowerCase()
+                onClicked: {
+                  root.activeTab = modelData.toLowerCase()
+                  panelFlick.contentY = 0
+                }
+                contentItem: Text {
+                  text: parent.text
+                  textFormat: Text.PlainText
+                  color: parent.checked ? root.foreground : root.dim
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.bodySmall
+                  font.bold: parent.checked
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                }
+                background: Rectangle {
+                  radius: Style.cornerRadius
+                  color: root.alpha(root.foreground, parent.checked ? 0.14 : parent.hovered ? 0.08 : 0.03)
+                  border.width: parent.checked ? 1 : 0
+                  border.color: root.alpha(root.foreground, 0.35)
+                }
+              }
+            }
+          }
+
+          Row {
+            width: parent.width
+            spacing: Style.space(10)
+            Text {
+              width: parent.width - periodSelect.width - parent.spacing
+              anchors.verticalCenter: parent.verticalCenter
+              text: root.periodReady ? root.formatMoney(root.activity.spend, "USD") + " total spend" : "Loading usage…"
+              textFormat: Text.PlainText
+              color: root.foreground
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.bodySmall
+            }
+            Controls.ComboBox {
+              id: periodSelect
+              width: Style.space(128)
+              height: Style.space(32)
+              model: ["Last 7 days", "Last 30 days", "Last 90 days"]
+              currentIndex: usage.detailsPeriods.indexOf(usage.detailsPeriod)
+              onActivated: function(index) { usage.setPeriod(usage.detailsPeriods[index]) }
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+              palette.buttonText: root.foreground
+              palette.text: root.foreground
+              palette.button: root.surface
+              palette.base: root.surface
+              palette.window: root.surface
+              palette.highlight: root.track
+              palette.highlightedText: root.foreground
+            }
+          }
+
+          Text {
+            visible: !root.periodReady
+            width: parent.width
+            text: usage.loading ? "Loading the selected period…" : usage.collectError || "Usage for this period is unavailable. Refresh to try again."
+            color: root.dim
+            textFormat: Text.PlainText
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+            wrapMode: Text.WordWrap
           }
 
           Column {
-            id: linksSection
-            visible: !!root.record
+            visible: root.activeTab !== "daily" && root.periodReady
             width: parent.width
-            spacing: Style.space(10)
-
-            Row {
-              id: linksRow
+            spacing: Style.spacing.md
+            PanelSectionHeader {
               width: parent.width
-              spacing: Style.space(6)
-
-              readonly property real cellWidth: (width - spacing * 3) / 4
-
-              LinkTile {
-                width: linksRow.cellWidth
-                icon: "󰐕"
-                label: "Add Credits"
-                url: "https://openrouter.ai/credits"
-              }
-              LinkTile {
-                width: linksRow.cellWidth
-                icon: "󰄪"
-                label: "Full Activity"
-                url: "https://openrouter.ai/activity"
-              }
-              LinkTile {
-                width: linksRow.cellWidth
-                icon: "󰌋"
-                label: "Manage Keys"
-                url: "https://openrouter.ai/workspaces/default/keys"
-              }
-              LinkTile {
-                width: linksRow.cellWidth
-                icon: "󰚩"
-                label: "Browse Models"
-                url: "https://openrouter.ai/models"
+              text: "SPEND BY " + (root.activeTab === "keys" ? "KEY" : root.activeTab === "models" ? "MODEL" : "APP")
+              foreground: root.foreground
+              fontFamily: root.fontFamily
+            }
+            Text {
+              visible: root.breakdownRows.length === 0
+              width: parent.width
+              text: root.breakdownError || "No usage in this period."
+              color: root.dim
+              textFormat: Text.PlainText
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.WordWrap
+            }
+            Repeater {
+              model: root.breakdownRows
+              RankedRow {
+                required property var modelData
+                width: parent.width
+                row: modelData
               }
             }
           }
@@ -560,7 +615,7 @@ Panel {
 
           Column {
             id: spendSection
-            visible: root.days.length > 0
+            visible: root.activeTab === "daily" && root.periodReady && root.days.length > 0
             width: parent.width
             spacing: Style.spacing.md
 
@@ -568,7 +623,7 @@ Panel {
 
             PanelSectionHeader {
               width: parent.width
-              text: "LAST 7 DAYS · ALL KEYS · UTC"
+              text: "SPEND BY DAY · ALL KEYS · UTC"
               foreground: root.foreground
               fontFamily: root.fontFamily
             }
@@ -595,7 +650,7 @@ Panel {
 
           Column {
             id: detailsSection
-            visible: !!root.record
+            visible: root.activeTab === "daily" && root.periodReady
             width: parent.width
             spacing: Style.space(10)
 
@@ -606,46 +661,12 @@ Panel {
               PanelSectionHeader {
                 id: detailsHdr
                 anchors.left: parent.left
-                anchors.right: detailsPeriodBtn.left
+                anchors.right: detailsToggle.left
                 anchors.rightMargin: Style.space(8)
                 anchors.verticalCenter: parent.verticalCenter
                 text: "DETAILS"
                 foreground: root.foreground
                 fontFamily: root.fontFamily
-              }
-
-              Rectangle {
-                id: detailsPeriodBtn
-                anchors.right: detailsToggle.left
-                anchors.rightMargin: root.detailsExpanded ? Style.space(8) : 0
-                anchors.verticalCenter: parent.verticalCenter
-                width: root.detailsExpanded ? detailsPeriodLabel.implicitWidth + Style.space(16) : 0
-                height: Style.space(28)
-                visible: root.detailsExpanded
-                radius: Math.max(3, Style.cornerRadius - 3)
-                color: root.alpha(root.foreground, detailsPeriodMa.containsMouse ? 0.12 : 0.06)
-                border.width: 1
-                border.color: root.alpha(root.foreground, detailsPeriodMa.containsMouse ? 0.5 : 0.35)
-
-                Text {
-                  textFormat: Text.PlainText
-                  id: detailsPeriodLabel
-                  anchors.centerIn: parent
-                  text: root.periodLabel(usage.detailsPeriod) + " ▾"
-                  color: root.foreground
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.caption
-                  font.bold: true
-                  font.letterSpacing: 1
-                }
-
-                MouseArea {
-                  id: detailsPeriodMa
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: usage.cyclePeriod()
-                }
               }
 
               Rectangle {
@@ -725,77 +746,7 @@ Panel {
                 wrapMode: Text.WordWrap
               }
 
-              Column {
-                id: modelsList
-                visible: root.topModels.length > 0
-                width: parent.width
-                spacing: Style.spacing.md
 
-                PanelSectionHeader {
-                  width: parent.width
-                  text: "TOP MODELS"
-                  foreground: root.foreground
-                  fontFamily: root.fontFamily
-                }
-
-                Repeater {
-                  model: root.topModels
-
-                  RankedRow {
-                    required property var modelData
-                    width: modelsList.width
-                    row: modelData
-                  }
-                }
-              }
-
-              Column {
-                id: appsList
-                visible: root.topApps.length > 0
-                width: parent.width
-                spacing: Style.spacing.md
-
-                PanelSectionHeader {
-                  width: parent.width
-                  text: "TOP APPS"
-                  foreground: root.foreground
-                  fontFamily: root.fontFamily
-                }
-
-                Repeater {
-                  model: root.topApps
-
-                  RankedRow {
-                    required property var modelData
-                    width: appsList.width
-                    row: modelData
-                  }
-                }
-              }
-
-              Column {
-                id: keysList
-                visible: root.topKeys.length > 0
-                width: parent.width
-                spacing: Style.spacing.md
-
-                PanelSectionHeader {
-                  width: parent.width
-                  text: "TOP KEYS"
-                  foreground: root.foreground
-                  fontFamily: root.fontFamily
-                }
-
-                Repeater {
-                  model: root.topKeys
-
-                  RankedRow {
-                    required property var modelData
-                    width: keysList.width
-                    row: modelData
-                  }
-                }
-              }
             }
           }
 
@@ -817,52 +768,6 @@ Panel {
   }
 
   // ------------------------------------------------------------ components
-
-  component LinkTile: Item {
-    id: linkTile
-    property string icon: ""
-    property string label: ""
-    property string url: ""
-
-    implicitHeight: linkIcon.implicitHeight + linkCaption.implicitHeight + Style.space(10)
-
-    MouseArea {
-      id: linkMa
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: root.openLink(linkTile.url)
-    }
-
-    Column {
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.verticalCenter: parent.verticalCenter
-      spacing: Style.space(4)
-
-      Text {
-        textFormat: Text.PlainText
-        id: linkIcon
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: linkTile.icon
-        color: linkMa.containsMouse ? root.foreground : root.dim
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.display
-      }
-
-      Text {
-        textFormat: Text.PlainText
-        id: linkCaption
-        width: parent.width
-        text: linkTile.label
-        color: linkMa.containsMouse ? root.foreground : root.dim
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.caption
-        horizontalAlignment: Text.AlignHCenter
-        wrapMode: Text.WordWrap
-      }
-    }
-  }
 
   component Meter: Item {
     id: meter
@@ -1104,7 +1009,7 @@ Panel {
     Text {
       textFormat: Text.PlainText
       id: rankedValue
-      text: rankedRow.row ? root.formatActivityTokens(rankedRow.row.tokens) : ""
+      text: rankedRow.row ? root.formatMoney(rankedRow.row.cost, "USD") : ""
       color: root.dim
       font.family: root.fontFamily
       font.pixelSize: Style.font.bodySmall
@@ -1113,5 +1018,18 @@ Panel {
       anchors.right: parent.right
       anchors.verticalCenter: parent.verticalCenter
     }
+    MouseArea {
+      id: rankedHover
+      anchors.fill: parent
+      hoverEnabled: true
+      acceptedButtons: Qt.NoButton
+    }
+    PanelToolTip {
+      visible: rankedHover.containsMouse
+      text: rankedRow.row ? String(rankedRow.row.name) + " · " + root.formatMoney(rankedRow.row.cost, "USD")
+        + " · " + usage.formatTokenCount(rankedRow.row.tokens) + " tokens" : ""
+      fontFamily: root.fontFamily
+    }
+
   }
 }

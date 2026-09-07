@@ -328,21 +328,19 @@ def analytics_rows(result: dict[str, Any]) -> list[dict[str, Any]]:
   return rows
 
 
-def ranked_tokens(rows: list[dict[str, Any]], name_key: str, limit: int) -> list[dict[str, Any]]:
+def ranked_spend(rows: list[dict[str, Any]], name_key: str, limit: int) -> list[dict[str, Any]]:
   items: list[dict[str, Any]] = []
   for row in rows:
     raw = row.get(name_key)
-    if raw is None:
-      continue
     label = clean_text(raw, MAX_MODEL_NAME).strip()
     if label == "" or label.lower() in ("null", "none", "unset", "(unset)"):
-      continue
+      label = "Unknown"
     items.append({
       "name": label,
       "tokens": number(row.get("tokens_total")),
       "cost": money(row.get("total_usage")),
     })
-  items.sort(key=lambda item: item["tokens"], reverse=True)
+  items.sort(key=lambda item: item["cost"], reverse=True)
   return items[:limit]
 
 
@@ -384,11 +382,11 @@ def probe_activity(key: str, period: str) -> dict[str, Any]:
               "granularity": "day", "limit": PERIOD_DAYS[period]},
     "overview": {"metrics": ["cache_hit_rate"]},
     "models": {"metrics": ["tokens_total", "total_usage"], "dimensions": ["model"],
-               "order_by": {"field": "tokens_total", "direction": "desc"}, "limit": 3},
-    "apps": {"metrics": ["tokens_total"], "dimensions": ["app"],
-             "order_by": {"field": "tokens_total", "direction": "desc"}, "limit": 3},
-    "keys": {"metrics": ["tokens_total"], "dimensions": ["api_key_id"],
-             "order_by": {"field": "tokens_total", "direction": "desc"}, "limit": 3},
+               "order_by": {"field": "total_usage", "direction": "desc"}, "limit": 1000},
+    "apps": {"metrics": ["tokens_total", "total_usage"], "dimensions": ["app"],
+             "order_by": {"field": "total_usage", "direction": "desc"}, "limit": 1000},
+    "keys": {"metrics": ["tokens_total", "total_usage"], "dimensions": ["api_key_id"],
+             "order_by": {"field": "total_usage", "direction": "desc"}, "limit": 1000},
   }
   # All queries cover the account. No key filter or key enumeration is needed.
   with ThreadPoolExecutor(max_workers=5) as pool:
@@ -402,24 +400,25 @@ def probe_activity(key: str, period: str) -> dict[str, Any]:
       "requests": sum(day["prompts"] for day in daily),
       "tokens": sum(day["messageCount"] for day in daily),
       "cacheHitRate": None, "topModels": [], "topApps": [], "topKeys": [],
-      "recentDays": daily, "needsManagementKey": False,
+      "recentDays": daily, "needsManagementKey": False, "breakdownErrors": {},
     }
     # Optional details must not hide successfully fetched daily usage.
     for name in ("overview", "models", "apps", "keys"):
       try:
         result = pending[name].result()
-        # Ranked queries intentionally limit their results to the top three.
         if name == "overview":
           rows = analytics_rows(result)
           activity["cacheHitRate"] = ratio(rows[0].get("cache_hit_rate")) if rows else None
         else:
-          rows = result.get("data")
-          if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
-            raise ValueError("Malformed rankings")
+          rows = analytics_rows(result)
           field = {"models": "model", "apps": "app", "keys": "api_key_id"}[name]
-          activity["top" + name.title()] = ranked_tokens(rows, field, 3)
+          activity["top" + name.title()] = ranked_spend(rows, field, 1000)
       except (urllib.error.URLError, OSError, ValueError, TypeError, KeyError):
-        activity["helpText"] = "Some account details are unavailable. Daily totals are shown."
+        if name != "overview":
+          activity["breakdownErrors"][name] = "Could not retrieve a complete spend breakdown. Refresh to try again."
+        else:
+          activity["helpText"] = "Cache hit rate is unavailable. Daily totals are shown."
+
   return activity
 
 
@@ -430,7 +429,7 @@ def collect_usage(period: str, force: bool) -> dict[str, Any]:
   # Separate caches by credential and schema, so an old inference-key record
   # or another account's totals can never satisfy this request.
   identity = hashlib.sha256(key.encode()).hexdigest()
-  cache_file = cache_root() / f"openrouter-management-v1-{identity}-{period}.json"
+  cache_file = cache_root() / f"openrouter-management-v2-{identity}-{period}.json"
   cached = read_fresh_json(cache_file, float("inf")) or {}
   same_day = str(cached.get("fetchedAt", ""))[:10] == dt.datetime.now(dt.timezone.utc).date().isoformat()
   if not force and same_day and time.time() - cached.get("fetchedAtSeconds", 0) < ACTIVITY_CACHE_SECONDS:
@@ -475,7 +474,7 @@ def main() -> int:
   parser = argparse.ArgumentParser()
   parser.add_argument("--force", action="store_true", help="refresh account usage, ignoring caches")
   parser.add_argument("--limits-only", action="store_true", help="reuse recent account usage when opening the panel")
-  parser.add_argument("--period", choices=list(VALID_PERIODS), default="1mo", help="activity window for the Details section")
+  parser.add_argument("--period", choices=list(VALID_PERIODS), default="7d", help="usage window for all tabs")
   parser.add_argument("--cache-seconds", type=float, default=20)
   args = parser.parse_args()
 

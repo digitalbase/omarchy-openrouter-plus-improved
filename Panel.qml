@@ -667,11 +667,6 @@ Panel {
           }
 
           // ---------- Spend by day ----------
-          PanelSeparator {
-            visible: spendSection.visible
-            foreground: root.foreground
-          }
-
           Column {
             id: spendSection
             visible: root.activeTab === "daily" && root.periodReady && root.days.length > 0

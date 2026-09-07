@@ -264,8 +264,8 @@ Panel {
       spacing: Style.space(6)
 
       Item {
-        width: Style.bar.iconCanvas
-        height: Style.bar.iconCanvas
+        width: (Style.bar.iconCanvas * 0.8)
+        height: (Style.bar.iconCanvas * 0.8)
         anchors.verticalCenter: parent.verticalCenter
 
         Image {
@@ -294,7 +294,7 @@ Panel {
           text: button.text
           color: root.balanceAlarming ? root.urgent : root.barForeground
           font.family: root.fontFamily
-          font.pixelSize: Style.bar.iconFont
+          font.pixelSize: Style.bar.iconFont * 0.8
         }
       }
 
@@ -304,8 +304,8 @@ Panel {
     Item {
       visible: button.vertical
       anchors.centerIn: parent
-      width: Style.bar.iconCanvas
-      height: Style.bar.iconCanvas
+      width: (Style.bar.iconCanvas * 0.8)
+      height: (Style.bar.iconCanvas * 0.8)
 
       Image {
         id: barMarkVertical

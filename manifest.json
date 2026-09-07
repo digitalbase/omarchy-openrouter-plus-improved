@@ -13,7 +13,7 @@
   },
   "barWidget": {
     "displayName": "OpenRouter Usage Plus",
-    "description": "Bar mark plus remaining credit. Panel: header balance, OpenRouter shortcuts, spend by day, and a sticky Details section for spend, requests, tokens, cache hit, top models, top apps, and top keys.",
+    "description": "Bar icon. Panel: header balance, OpenRouter shortcuts, spend by day, and a sticky Details section for spend, requests, tokens, cache hit, top models, top apps, and top keys.",
     "category": "AI",
     "aliases": ["openrouter", "openrouter-usage", "openrouter-usage-plus"],
     "allowMultiple": false,

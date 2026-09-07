@@ -46,10 +46,6 @@ Panel {
 
   function refreshNow() { usage.refreshAll(true) }
 
-  readonly property string barBalanceLabel: balance
-    ? formatMoney(balance.remaining, balance.currency)
-    : ""
-
   function openLink(url) {
     var href = String(url || "")
     if (href === "") return
@@ -281,7 +277,7 @@ Panel {
     labelVisible: false
     hasVisualContent: true
     active: root.balanceAlarming
-    fixedWidth: button.vertical ? Style.bar.iconSlot : (barRow.implicitWidth + Style.space(16))
+    fixedWidth: Style.bar.iconSlot
     fixedHeight: button.vertical ? Style.bar.iconSlot : -1
     onPressed: function(buttonCode) {
       if (buttonCode === Qt.RightButton) root.refreshNow()
@@ -329,16 +325,7 @@ Panel {
         }
       }
 
-      Text {
-        textFormat: Text.PlainText
-        visible: text !== ""
-        text: root.barBalanceLabel
-        color: root.balanceAlarming ? root.urgent : root.barForeground
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.caption
-        font.bold: true
-        anchors.verticalCenter: parent.verticalCenter
-      }
+
     }
 
     Item {

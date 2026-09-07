@@ -180,7 +180,9 @@ Panel {
 
   function activityHint() {
     if (!activity) return ""
-    return String(activity.helpText || "All keys combined · UTC calendar days · today is partial.")
+    return String(activity.helpText || (activity.period === "24h"
+      ? "All keys combined · last 24 hours, grouped by UTC date."
+      : "All keys combined · UTC calendar days · today is partial."))
   }
 
   function formatActivityTokens(n) {
@@ -571,7 +573,7 @@ Panel {
                 palette.text: root.foreground
                 highlighted: periodSelect.highlightedIndex === index
               }
-              model: ["Last 7 days", "Last 30 days", "Last 90 days"]
+              model: ["Last 24 hours", "Last 3 days", "Last 7 days", "Last 30 days", "Last 90 days"]
               currentIndex: usage.detailsPeriods.indexOf(usage.detailsPeriod)
               onActivated: function(index) { usage.setPeriod(usage.detailsPeriods[index]) }
               font.family: root.fontFamily
@@ -716,6 +718,16 @@ Panel {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
           }
+          Text {
+            width: parent.width
+            textFormat: Text.PlainText
+            text: "R refreshes"
+            color: root.foreground
+            opacity: 0.45
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+          }
+
         }
       }
     }

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # omarchy:summary=Print the OpenRouter usage record as JSON
-# omarchy:args=[--force] [--limits-only] [--period 7d|1mo|3mo]
+# omarchy:args=[--force] [--limits-only] [--period 24h|3d|7d|1mo|3mo]
 # omarchy:hidden=true
 """Collect account-wide daily usage using an OpenRouter management key."""
 
@@ -27,8 +27,8 @@ AGENT_NAME = "OpenRouter"
 AUTH_HELP = "Set OPENROUTER_MANAGEMENT_KEY or add managementKey to ~/.config/omarchy/agents/openrouter.json. An OpenRouter management key is required."
 API_BASE_URL = "https://openrouter.ai/api/v1"
 ACTIVITY_CACHE_SECONDS = 300
-VALID_PERIODS = ("7d", "1mo", "3mo")
-PERIOD_DAYS = {"7d": 7, "1mo": 30, "3mo": 90}
+VALID_PERIODS = ("24h", "3d", "7d", "1mo", "3mo")
+PERIOD_DAYS = {"24h": 1, "3d": 3, "7d": 7, "1mo": 30, "3mo": 90}
 MAX_PRIVATE_FILE_BYTES = 512 * 1024
 MAX_HTTP_BYTES = 256 * 1024
 MAX_MODEL_NAME = 160
@@ -347,7 +347,8 @@ def ranked_spend(rows: list[dict[str, Any]], name_key: str, limit: int) -> list[
 def period_time_range(period: str) -> dict[str, str]:
   days = PERIOD_DAYS.get(period, 30)
   end = dt.datetime.now(dt.timezone.utc)
-  start = end.replace(hour=0, minute=0, second=0, microsecond=0) - dt.timedelta(days=days - 1)
+  start = (end - dt.timedelta(hours=24) if period == "24h" else
+           end.replace(hour=0, minute=0, second=0, microsecond=0) - dt.timedelta(days=days - 1))
   return {
     "start": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
     "end": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -362,7 +363,8 @@ def daily_usage(result: dict[str, Any], time_range: dict[str, str]) -> list[dict
     day = date_string(start + dt.timedelta(days=offset))
     days[day] = {"date": day, "cost": 0.0, "prompts": 0, "messageCount": 0}
   for row in analytics_rows(result):
-    raw = row.get("date__day") or row.get("created_at__day")
+    raw = (row.get("date__day") or row.get("created_at__day")
+           or row.get("date__hour") or row.get("created_at__hour"))
     day = dt.date.fromisoformat(str(raw)[:10]).isoformat()
     if day not in days:
       raise ValueError("Analytics date outside requested window")
@@ -379,7 +381,8 @@ def probe_activity(key: str, period: str) -> dict[str, Any]:
   time_range = period_time_range(period)
   queries = {
     "daily": {"metrics": ["total_usage", "request_count", "tokens_total"],
-              "granularity": "day", "limit": PERIOD_DAYS[period]},
+              "granularity": "hour" if period == "24h" else "day",
+              "limit": 25 if period == "24h" else PERIOD_DAYS[period]},
     "overview": {"metrics": ["cache_hit_rate"]},
     "models": {"metrics": ["tokens_total", "total_usage"], "dimensions": ["model"],
                "order_by": {"field": "total_usage", "direction": "desc"}, "limit": 1000},

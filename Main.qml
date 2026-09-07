@@ -38,7 +38,7 @@ Item {
   property int refreshIntervalSec: Math.max(60, Number(setting("refreshIntervalSec", 300)))
   property string pendingKind: ""
   property string detailsPeriod: "7d"
-  readonly property var detailsPeriods: ["7d", "1mo", "3mo"]
+  readonly property var detailsPeriods: ["24h", "3d", "7d", "1mo", "3mo"]
 
   Process {
     id: collectProcess
@@ -103,7 +103,7 @@ Item {
     if (kind === "force") command.push("--force")
     if (kind === "limits") command.push("--limits-only")
     command.push("--period")
-    command.push(root.detailsPeriod === "7d" || root.detailsPeriod === "3mo" ? root.detailsPeriod : "1mo")
+    command.push(root.detailsPeriods.indexOf(root.detailsPeriod) >= 0 ? root.detailsPeriod : "7d")
     loading = true
     stdoutBuf = ""
     stderrBuf = ""
@@ -114,7 +114,7 @@ Item {
   }
 
   function setPeriod(period) {
-    var next = period === "7d" || period === "3mo" ? period : "1mo"
+    var next = detailsPeriods.indexOf(period) >= 0 ? period : "7d"
     if (next === detailsPeriod) return
     detailsPeriod = next
     collect("normal")

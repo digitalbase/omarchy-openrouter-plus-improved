@@ -24,7 +24,7 @@ Panel {
 
   readonly property var record: usage.record
   readonly property var balance: record ? (record.balance || null) : null
-  readonly property var days: record ? (record.recentDays || []) : []
+  readonly property var days: record ? (record.recentDays || []).slice().reverse() : []
   readonly property var activity: record ? (record.activity || null) : null
   property string activeTab: "daily"
   readonly property bool periodReady: !!activity && activity.period === usage.detailsPeriod

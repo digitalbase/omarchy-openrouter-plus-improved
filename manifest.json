@@ -5,7 +5,7 @@
   "version": "1.2.0",
   "author": "calmasacow",
   "license": "MIT",
-  "description": "OpenRouter credits on the Omarchy bar: remaining balance, spend by day, Details with top models/apps/keys, and shortcuts to credits, activity, keys, and models.",
+  "description": "OpenRouter account credits and daily spend across all keys. Requires a management API key.",
   "kinds": ["bar-widget"],
   "activation": "on-demand",
   "entryPoints": {

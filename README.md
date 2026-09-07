@@ -1,88 +1,61 @@
-# OpenRouter Usage Plus — Omarchy bar widget
+# OpenRouter Usage Plus for Omarchy
 
-Live OpenRouter credits and spend in the Omarchy (Quattro / 4.x) bar.
+OpenRouter account balance and daily usage across all API keys, including usage from other machines and apps. Requires one [management API key](https://openrouter.ai/settings/management-keys). Inference keys are not used.
 
-![OpenRouter Usage Plus panel](assets/screenshot.png)
+This is a modification of [calmasacow/omarchy-openrouter-usage-plus](https://github.com/calmasacow/omarchy-openrouter-usage-plus), derived from [sepehr500/omarchy-openrouter-usage](https://github.com/sepehr500/omarchy-openrouter-usage). It keeps the existing plugin ID so it can replace that widget.
 
-- **Bar** — OpenRouter mark plus remaining prepaid credit
-- **Header** — remaining balance on the right of OpenRouter / prepaid
-- **Shortcuts** — Add Credits, Full Activity, Manage Keys, Browse Models
-- **Spend by day** — last 7 days of rated cost
-- **Details** — sticky expand: spend, requests, tokens, cache hit, top models, top apps, top keys
+## Setup
 
-Derived from [ssobhani/omarchy-openrouter-usage](https://github.com/sepehr500/omarchy-openrouter-usage) (MIT). This plugin does **not** replace the stock `omarchy.agents` widget.
+Requires Omarchy 4.x and Python 3. Use this checkout as the replacement plugin source. The upstream install URL still installs the original version, without these changes.
 
-## Requirements
-
-- Omarchy 4.x (Quattro)
-- An OpenRouter API key
-- Optional: [management key](https://openrouter.ai/settings/management-keys) for Top Apps and Top Keys
-- Optional: pi/omp OpenRouter sessions for local spend-by-day when analytics is unavailable
-
-## Install
-
-```bash
-omarchy plugin add https://github.com/calmasacow/omarchy-openrouter-usage-plus.git --enable
-```
-
-Then copy the example config and put your real keys in it. The checked-in file is a template only — never commit live keys.
-
-```bash
-mkdir -p ~/.config/omarchy/agents
-cp examples/config/omarchy/agents/openrouter.json ~/.config/omarchy/agents/openrouter.json
-chmod 600 ~/.config/omarchy/agents/openrouter.json
-```
-
-Example (`examples/config/omarchy/agents/openrouter.json`):
+Edit `~/.config/omarchy/agents/openrouter.json` to contain your management key:
 
 ```json
 {
-  "apiKey": "sk-or-v1-REPLACE_WITH_YOUR_INFERENCE_KEY",
   "managementKey": "sk-or-v1-REPLACE_WITH_YOUR_MANAGEMENT_KEY"
 }
 ```
 
-- `apiKey` — inference key from [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys) (balance, spend). You can also export `OPENROUTER_API_KEY`.
-- `managementKey` — read-only [management key](https://openrouter.ai/settings/management-keys) for Top Models / Apps / Keys. Analytics rejects inference keys (403). You can also export `OPENROUTER_MANAGEMENT_KEY`.
+Protect the config file:
 
-The widget appears once the first scan finds a usable account or local usage.
-
-## Optional: Details from the Activity API
-
-Without `managementKey`, Details still shows cards from local pi/omp sessions when those exist; ranked lists stay hidden.
-
-`d` toggles Details. Expand/collapse is remembered in bar settings.
-
-## Optional: budget gauge
-
-OpenRouter only reports lifetime purchases and usage. For a drain meter, set `fundedAmount` to your current top-up:
-
-```json
-{"apiKey": "sk-or-v1-...", "fundedAmount": 1000}
+```bash
+chmod 600 ~/.config/omarchy/agents/openrouter.json
 ```
+
+Alternatively, set `OPENROUTER_MANAGEMENT_KEY` in the shell's environment. This takes precedence over the file. The old `apiKey` setting and `OPENROUTER_API_KEY` are ignored. No inference key or local pi/omp session files are needed. Keep live keys out of Git.
+
+## Daily usage
+
+The panel lists spend per UTC calendar day with all keys combined. Hover over a day for token and request counts. Today is partial and reflects the data currently available from OpenRouter.
+
+Expand Details and use its period selector to choose 7 days, 1 month, or 3 months. Both the daily list and Details totals use that window, including today. Missing days in a successful query show zero. Details also includes cache hit rate and the top models, apps, and keys when available.
+
+The collector uses the [Analytics API](https://openrouter.ai/docs/api/api-reference/beta-analytics/query-analytics) with `granularity: day` and no key filter or key dimension. There is no per-key limit on coverage and no local usage fallback. Both documented date fields, `date__day` and `created_at__day`, are supported. Incomplete responses are rejected instead of displayed as full totals.
+
+Account credit balance comes from `/credits` with the same management key. A balance error does not hide daily usage. Missing or rejected management keys show a setup error. Temporary analytics failures may show cached totals with their fetch time and an error message. Cache files are private and separated by credential and selected period.
 
 ## Settings
 
-Right-click the bar mark to refresh.
+Right-click the bar icon to force a refresh. Press `d` in the panel to toggle Details.
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `refreshIntervalSec` | 300 | How often the collector re-probes the account |
-| `detailsExpanded` | false | Keep Details expanded across panel closes |
+| `refreshIntervalSec` | 300 | Automatic refresh interval |
+| `detailsExpanded` | false | Remember whether Details is expanded |
 
-## Remove
+Successful usage is cached for five minutes. Forced refresh bypasses the cache.
+
+For the optional budget gauge, add `"fundedAmount": 1000` beside `managementKey`. This expresses your chosen funded amount in USD; it is not a per-key spending limit.
+
+## Verification
 
 ```bash
-omarchy plugin remove calmasacow.openrouter-usage-plus
+python -m unittest discover -s tests -v
+./bin/collect --force --period 7d
 ```
 
-Optionally delete `~/.config/omarchy/agents/openrouter.json` and `~/.cache/omarchy/agent-usage/openrouter-*.json`. The plugin does not rewrite other config.
+The tests use mocked API responses and do not need credentials. The collector command uses your configured management key.
 
-## Credits
+## Credits and license
 
-- Original widget: sepehr500 / ssobhani
-- OpenRouter "OR" glyph from OpenRouter brand assets (openrouter.ai/brand/v2). OpenRouter is a trademark of its owner; this project is not affiliated.
-
-## License
-
-MIT
+Original widget by sepehr500 / ssobhani; Usage Plus by calmasacow. MIT license. The OpenRouter glyph comes from OpenRouter brand assets. This project is not affiliated with OpenRouter.

@@ -92,13 +92,13 @@ Panel {
     return tier.charAt(0).toUpperCase() + tier.slice(1)
   }
 
-  // Local calendar date, recomputed from nowMs so a panel left open across
+  // UTC calendar date, recomputed from nowMs so a panel left open across
   // midnight moves the "Today" row with the clock.
   function todayDate() {
     var now = new Date(root.nowMs)
-    return now.getFullYear()
-      + "-" + String(now.getMonth() + 1).padStart(2, "0")
-      + "-" + String(now.getDate()).padStart(2, "0")
+    return now.getUTCFullYear()
+      + "-" + String(now.getUTCMonth() + 1).padStart(2, "0")
+      + "-" + String(now.getUTCDate()).padStart(2, "0")
   }
 
   function dayName(date) {
@@ -108,7 +108,7 @@ Panel {
   }
 
   function dayLabel(date, today) {
-    return today ? "Today" : dayName(date)
+    return today ? "Today" : String(date || "").slice(5)
   }
 
   function dayTooltip(day, today) {
@@ -119,9 +119,7 @@ Panel {
       : dayName(day.date) + " " + (parsed.getMonth() + 1) + "/" + parsed.getDate()
     var text = label + " · " + formatCost(day.cost)
       + " · " + usage.formatTokenCount(Number(day.messageCount || 0)) + " tokens"
-    if (today && record)
-      text += " · " + Number(record.todayPrompts || 0) + " prompts · "
-        + Number(record.todaySessions || 0) + " sessions"
+    text += " · " + Number(day.prompts || 0) + " requests · UTC · all keys"
     return text
   }
 
@@ -199,11 +197,7 @@ Panel {
 
   function activityHint() {
     if (!activity) return ""
-    if (activity.source === "local")
-      return "Local last 7 days · add managementKey to ~/.config/omarchy/agents/openrouter.json for Top Apps and Keys."
-    if (activity.needsManagementKey)
-      return "Add managementKey to ~/.config/omarchy/agents/openrouter.json for Top Apps and Keys."
-    return ""
+    return String(activity.helpText || "All keys combined · UTC calendar days · today is partial.")
   }
 
   function formatActivityTokens(n) {
@@ -218,6 +212,7 @@ Panel {
   }
 
   function formatCacheHit(n) {
+    if (n === null || n === undefined) return "—"
     var rate = Number(n || 0)
     if (!(rate >= 0)) rate = 0
     if (rate > 1) rate = rate / 100
@@ -586,7 +581,7 @@ Panel {
 
             PanelSectionHeader {
               width: parent.width
-              text: "SPEND BY DAY"
+              text: "SPEND BY DAY · ALL KEYS · UTC"
               foreground: root.foreground
               fontFamily: root.fontFamily
             }

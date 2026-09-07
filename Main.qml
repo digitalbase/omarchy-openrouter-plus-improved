@@ -178,9 +178,7 @@ Item {
 
   function refreshAll(force) { collect(force === true ? "force" : "normal") }
 
-  // Opening the panel wants the numbers that go stale on the wire, not
-  // another walk over every transcript on disk — the collector reuses its
-  // recent scan in this mode.
+  // Opening the panel reuses recent account usage until its cache expires.
   function refreshLimits() { collect("limits") }
 
   Timer {

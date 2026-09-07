@@ -86,7 +86,7 @@ Panel {
   function heroMeta() {
     if (!record) return ""
     if (String(record.usageStatusText || "") !== "") return record.usageStatusText
-    return "Usage across all keys"
+    return "Account usage"
   }
 
   // UTC calendar date, recomputed from nowMs so a panel left open across
@@ -383,7 +383,7 @@ Panel {
             readonly property color dimColor: root.dim
             readonly property string family: root.fontFamily
 
-            PanelHero {
+            AccountHero {
               id: hero
               width: parent.width
               title: "OpenRouter"

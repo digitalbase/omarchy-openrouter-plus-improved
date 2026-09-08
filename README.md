@@ -2,6 +2,8 @@
 
 OpenRouter account balance and daily usage across all API keys, including usage from other machines and apps. Requires one [management API key](https://openrouter.ai/settings/management-keys). Inference keys are not used.
 
+The taskbar shows the live remaining balance in compact form, such as `$150.1k`. Open the panel for the exact amount.
+
 ![OpenRouter Plus Improved panel](preview.png)
 
 This is a modification of [calmasacow/omarchy-openrouter-usage-plus](https://github.com/calmasacow/omarchy-openrouter-usage-plus), derived from [sepehr500/omarchy-openrouter-usage](https://github.com/sepehr500/omarchy-openrouter-usage).

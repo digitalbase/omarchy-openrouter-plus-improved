@@ -252,8 +252,11 @@ Panel {
     labelVisible: false
     hasVisualContent: true
     active: root.balanceAlarming
-    fixedWidth: Style.bar.iconSlot
+    fixedWidth: button.vertical ? Style.bar.iconSlot : barRow.implicitWidth + Style.space(16)
     fixedHeight: button.vertical ? Style.bar.iconSlot : -1
+    tooltipText: root.balance
+      ? "OpenRouter · " + root.formatMoney(root.balance.remaining, root.balance.currency) + " remaining"
+      : "OpenRouter"
     onPressed: function(buttonCode) {
       if (buttonCode === Qt.RightButton) root.refreshNow()
       else root.toggle()
@@ -300,7 +303,17 @@ Panel {
         }
       }
 
-
+      Text {
+        visible: !!root.balance
+        anchors.verticalCenter: parent.verticalCenter
+        textFormat: Text.PlainText
+        text: root.balance ? root.formatCost(root.balance.remaining) : ""
+        color: root.balanceAlarming ? root.urgent : root.barForeground
+        font.family: root.fontFamily
+        font.pixelSize: button.fontSize
+        font.bold: true
+        renderType: Text.NativeRendering
+      }
     }
 
     Item {

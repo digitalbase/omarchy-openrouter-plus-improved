@@ -67,6 +67,18 @@ Panel {
     return prefix + amount.toFixed(2)
   }
 
+  function formatBalance(value, currency) {
+    var amount = Number(value)
+    if (!isFinite(amount)) return ""
+    var prefix = String(currency || "USD").toUpperCase() === "USD" ? "$" : String(currency).toUpperCase() + " "
+    if (amount >= 100000) return prefix + Math.floor(amount / 1000) + "k"
+    if (amount >= 1000) {
+      var thousands = Math.floor(amount / 100) / 10
+      return prefix + thousands.toFixed(1).replace(/\.0$/, "") + "k"
+    }
+    return prefix + amount.toFixed(2)
+  }
+
   function formatCost(value) {
     var n = Number(value || 0)
     if (!(n >= 0)) n = 0
@@ -252,8 +264,11 @@ Panel {
     labelVisible: false
     hasVisualContent: true
     active: root.balanceAlarming
-    fixedWidth: Style.bar.iconSlot
+    fixedWidth: button.vertical ? Style.bar.iconSlot : barRow.implicitWidth + Style.space(16)
     fixedHeight: button.vertical ? Style.bar.iconSlot : -1
+    tooltipText: root.balance
+      ? "OpenRouter · " + root.formatMoney(root.balance.remaining, root.balance.currency) + " remaining"
+      : "OpenRouter"
     onPressed: function(buttonCode) {
       if (buttonCode === Qt.RightButton) root.refreshNow()
       else root.toggle()
@@ -300,7 +315,17 @@ Panel {
         }
       }
 
-
+      Text {
+        visible: !!root.balance
+        anchors.verticalCenter: parent.verticalCenter
+        textFormat: Text.PlainText
+        text: root.balance ? root.formatBalance(root.balance.remaining, root.balance.currency) : ""
+        color: root.balanceAlarming ? root.urgent : root.barForeground
+        font.family: root.fontFamily
+        font.pixelSize: button.fontSize
+        font.bold: true
+        renderType: Text.NativeRendering
+      }
     }
 
     Item {
@@ -379,7 +404,7 @@ Panel {
             width: parent.width
             implicitHeight: hero.implicitHeight
             readonly property string amountText: root.balance
-              ? root.formatMoney(root.balance.remaining, root.balance.currency)
+              ? root.formatBalance(root.balance.remaining, root.balance.currency)
               : ""
             readonly property color amountColor: root.balanceAlarming ? root.urgent : root.foreground
             readonly property color dimColor: root.dim

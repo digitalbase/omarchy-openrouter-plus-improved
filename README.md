@@ -2,7 +2,7 @@
 
 OpenRouter account balance and daily usage across all API keys, including usage from other machines and apps. Requires one [management API key](https://openrouter.ai/settings/management-keys). Inference keys are not used.
 
-The taskbar and panel header show the live remaining balance in compact form, such as `$150k`. Hover over the taskbar widget for the exact amount.
+The taskbar and panel header show the live remaining balance without crowding the bar. Balances below `$1,000` keep their cents, four- and five-figure balances use one decimal such as `$12.3k`, and six-figure balances drop the smaller digits, such as `$150k`. Hover over the taskbar widget for the exact amount.
 
 ![OpenRouter Plus Improved panel](preview.png)
 

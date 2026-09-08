@@ -11,8 +11,8 @@ import qs.Ui
 // first: the charts are dollars, and token counts ride in the tooltips.
 Panel {
   id: root
-  moduleName: "calmasacow.openrouter-usage-plus"
-  ipcTarget: "calmasacow.openrouter-usage-plus"
+  moduleName: "digitalbase.openrouter-plus-improved"
+  ipcTarget: "digitalbase.openrouter-plus-improved"
   manageIpc: false
 
   readonly property color foreground: bar ? bar.foreground : Color.foreground

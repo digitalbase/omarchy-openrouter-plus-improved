@@ -1,12 +1,18 @@
-# OpenRouter Usage Plus for Omarchy
+# OpenRouter Plus Improved for Omarchy
 
 OpenRouter account balance and daily usage across all API keys, including usage from other machines and apps. Requires one [management API key](https://openrouter.ai/settings/management-keys). Inference keys are not used.
 
-This is a modification of [calmasacow/omarchy-openrouter-usage-plus](https://github.com/calmasacow/omarchy-openrouter-usage-plus), derived from [sepehr500/omarchy-openrouter-usage](https://github.com/sepehr500/omarchy-openrouter-usage). It keeps the existing plugin ID so it can replace that widget.
+![OpenRouter Plus Improved panel](preview.png)
 
-## Setup
+This is a modification of [calmasacow/omarchy-openrouter-usage-plus](https://github.com/calmasacow/omarchy-openrouter-usage-plus), derived from [sepehr500/omarchy-openrouter-usage](https://github.com/sepehr500/omarchy-openrouter-usage).
 
-Requires Omarchy 4.x and Python 3. Use this checkout as the replacement plugin source. The upstream install URL still installs the original version, without these changes.
+## Install
+
+Requires Omarchy 4.x and Python 3.
+
+```bash
+omarchy plugin add https://github.com/digitalbase/omarchy-openrouter-plus-improved.git --enable
+```
 
 Edit `~/.config/omarchy/agents/openrouter.json` to contain your management key:
 
@@ -50,6 +56,14 @@ Successful usage is cached for five minutes. Forced refresh bypasses the cache.
 
 For the optional budget gauge, add `"fundedAmount": 1000` beside `managementKey`. This expresses your chosen funded amount in USD; it is not a per-key spending limit.
 
+## Remove
+
+```bash
+omarchy plugin remove digitalbase.openrouter-plus-improved
+```
+
+Optionally remove `~/.config/omarchy/agents/openrouter.json` and the plugin's files under `~/.cache/omarchy/agent-usage/`. The plugin does not edit other user configuration.
+
 ## Verification
 
 ```bash
@@ -61,4 +75,4 @@ The tests use mocked API responses and do not need credentials. The collector co
 
 ## Credits and license
 
-Original widget by sepehr500 / ssobhani; Usage Plus by calmasacow. MIT license. The OpenRouter glyph comes from OpenRouter brand assets. This project is not affiliated with OpenRouter.
+Original widget by sepehr500 / ssobhani; Usage Plus by calmasacow. This fork is maintained by Digitalbase. MIT license. The OpenRouter glyph comes from OpenRouter brand assets. This project is not affiliated with OpenRouter.

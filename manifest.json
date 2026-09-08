@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "calmasacow.openrouter-usage-plus",
-  "name": "OpenRouter Usage Plus",
-  "version": "1.2.0",
-  "author": "calmasacow",
+  "id": "digitalbase.openrouter-plus-improved",
+  "name": "OpenRouter Plus Improved",
+  "version": "1.0.0",
+  "author": "Digitalbase",
   "license": "MIT",
   "description": "OpenRouter account credits and daily spend across all keys. Requires a management API key.",
   "kinds": ["bar-widget"],
@@ -12,10 +12,10 @@
     "barWidget": "Panel.qml"
   },
   "barWidget": {
-    "displayName": "OpenRouter Usage Plus",
+    "displayName": "OpenRouter Plus Improved",
     "description": "Bar icon with account balance in the panel. Daily, Keys, Models, and Apps spend tabs share a period selector for 4, 8, or 24 hours or 3, 7, 30, or 90 days.",
     "category": "AI",
-    "aliases": ["openrouter", "openrouter-usage", "openrouter-usage-plus"],
+    "aliases": ["openrouter", "openrouter-usage", "openrouter-usage-plus", "openrouter-plus-improved"],
     "allowMultiple": false,
     "defaultSection": "right",
     "defaults": {

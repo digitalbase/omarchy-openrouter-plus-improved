@@ -67,6 +67,18 @@ Panel {
     return prefix + amount.toFixed(2)
   }
 
+  function formatBalance(value, currency) {
+    var amount = Number(value)
+    if (!isFinite(amount)) return ""
+    var prefix = String(currency || "USD").toUpperCase() === "USD" ? "$" : String(currency).toUpperCase() + " "
+    if (amount >= 100000) return prefix + Math.floor(amount / 1000) + "k"
+    if (amount >= 1000) {
+      var thousands = Math.floor(amount / 100) / 10
+      return prefix + thousands.toFixed(1).replace(/\.0$/, "") + "k"
+    }
+    return prefix + amount.toFixed(2)
+  }
+
   function formatCost(value) {
     var n = Number(value || 0)
     if (!(n >= 0)) n = 0
@@ -307,7 +319,7 @@ Panel {
         visible: !!root.balance
         anchors.verticalCenter: parent.verticalCenter
         textFormat: Text.PlainText
-        text: root.balance ? root.formatCost(root.balance.remaining) : ""
+        text: root.balance ? root.formatBalance(root.balance.remaining, root.balance.currency) : ""
         color: root.balanceAlarming ? root.urgent : root.barForeground
         font.family: root.fontFamily
         font.pixelSize: button.fontSize
@@ -392,7 +404,7 @@ Panel {
             width: parent.width
             implicitHeight: hero.implicitHeight
             readonly property string amountText: root.balance
-              ? root.formatMoney(root.balance.remaining, root.balance.currency)
+              ? root.formatBalance(root.balance.remaining, root.balance.currency)
               : ""
             readonly property color amountColor: root.balanceAlarming ? root.urgent : root.foreground
             readonly property color dimColor: root.dim
